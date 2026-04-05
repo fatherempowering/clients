@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Legacy Protocol — Plan Nutritionnel | Maxime Gaudet</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --teal:#085041;--teal-light:#E1F5EE;--teal-mid:#1D9E75;
+  --blue:#0C447C;--blue-light:#E6F1FB;--blue-mid:#378ADD;
+  --amber:#633806;--amber-light:#FAEEDA;--amber-mid:#EF9F27;
+  --gray:#444441;--gray-light:#F1EFE8;--gray-mid:#888780;
+  --dark:#1a1a1a;--white:#ffffff;--border:#e0ddd6;
+  --radius:12px;--radius-sm:8px;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;background:#f5f4f0;color:var(--dark);min-height:100vh;}
+.header{background:var(--teal);color:white;padding:20px 16px 16px;}
+.header-brand{font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;opacity:.7;margin-bottom:6px;}
+.header-title{font-size:22px;font-weight:700;line-height:1.2;}
+.header-sub{font-size:13px;opacity:.8;margin-top:4px;}
+.header-meta{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;}
+.header-badge{background:rgba(255,255,255,.15);border-radius:20px;padding:4px 10px;font-size:11px;font-weight:500;}
+.macros-bar{background:white;padding:14px 16px;border-bottom:1px solid var(--border);}
+.macros-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-mid);margin-bottom:10px;}
+.macros-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+.macro-card{background:var(--gray-light);border-radius:var(--radius-sm);padding:8px 10px;text-align:center;}
+.macro-card.accent{background:var(--teal-light);}
+.macro-val{font-size:17px;font-weight:700;color:var(--dark);}
+.macro-card.accent .macro-val{color:var(--teal);}
+.macro-lbl{font-size:10px;color:var(--gray-mid);margin-top:2px;}
+.macro-card.accent .macro-lbl{color:var(--teal);}
+.day-selector{background:white;padding:12px 16px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;}
+.day-scroll{display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:2px;}
+.day-scroll::-webkit-scrollbar{display:none;}
+.day-btn{flex-shrink:0;padding:7px 14px;border-radius:20px;border:1.5px solid var(--border);background:transparent;color:var(--gray-mid);font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;font-family:inherit;}
+.day-btn.active{background:var(--teal);border-color:var(--teal);color:white;}
+.day-btn.is-train{border-color:var(--teal-mid);}
+.content{padding:16px;max-width:600px;margin:0 auto;}
+.day-panel{display:none;}
+.day-panel.active{display:block;}
+.info-bar{border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:12px;font-size:13px;line-height:1.5;}
+.info-bar.blue{background:var(--blue-light);color:var(--blue);border-left:3px solid var(--blue-mid);}
+.info-bar.teal{background:var(--teal-light);color:var(--teal);border-left:3px solid var(--teal-mid);}
+.info-bar.amber{background:var(--amber-light);color:var(--amber);border-left:3px solid var(--amber-mid);}
+.section-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-mid);margin:20px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+.day-macros{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px;}
+.meal-card{background:white;border-radius:var(--radius);border:1px solid var(--border);margin-bottom:10px;overflow:hidden;}
+.meal-header{display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--border);}
+.meal-time-badge{background:var(--gray-light);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:600;color:var(--gray);white-space:nowrap;}
+.meal-time-badge.opt{background:var(--amber-light);color:var(--amber);}
+.meal-time-badge.pre{background:var(--teal-light);color:var(--teal);}
+.meal-name-text{font-size:14px;font-weight:600;color:var(--dark);flex:1;}
+.meal-body{padding:10px 14px;}
+.meal-detail{font-size:13px;color:#555;line-height:1.6;}
+.meal-detail strong{color:var(--dark);font-weight:600;}
+.macro-pill-row{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px;}
+.macro-pill{background:var(--gray-light);border-radius:20px;padding:3px 10px;font-size:11px;color:var(--gray);font-weight:500;}
+.macro-pill.p{background:var(--teal-light);color:var(--teal);}
+.batch-card{background:white;border-radius:var(--radius);border:1px solid var(--border);margin-bottom:10px;overflow:hidden;}
+.batch-header{padding:12px 14px;border-bottom:1px solid var(--border);}
+.batch-title{font-size:14px;font-weight:600;color:var(--dark);}
+.batch-sub{font-size:12px;color:var(--gray-mid);margin-top:2px;}
+.batch-step{display:flex;gap:12px;padding:10px 14px;border-bottom:1px solid var(--border);align-items:flex-start;}
+.batch-step:last-child{border-bottom:none;}
+.batch-num{width:26px;height:26px;border-radius:50%;background:var(--teal-light);color:var(--teal);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+.batch-step-title{font-size:13px;font-weight:600;color:var(--dark);}
+.batch-step-detail{font-size:12px;color:#666;line-height:1.5;margin-top:3px;}
+.grocery-card{background:white;border-radius:var(--radius);border:1px solid var(--border);margin-bottom:10px;overflow:hidden;}
+.grocery-section-hdr{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:white;background:var(--teal);padding:7px 14px;}
+.grocery-row{display:flex;justify-content:space-between;align-items:center;padding:9px 14px;border-bottom:1px solid var(--border);}
+.grocery-row:last-child{border-bottom:none;}
+.grocery-row:nth-child(even){background:var(--gray-light);}
+.grocery-name{font-size:13px;color:var(--dark);}
+.grocery-qty{font-size:12px;color:var(--gray-mid);font-weight:500;}
+.rules-card{background:white;border-radius:var(--radius);border:1px solid var(--border);margin-bottom:10px;overflow:hidden;}
+.rule-row{display:flex;gap:12px;padding:11px 14px;border-bottom:1px solid var(--border);align-items:flex-start;}
+.rule-row:last-child{border-bottom:none;}
+.rule-num{width:26px;height:26px;border-radius:50%;background:var(--teal);color:white;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+.rule-title{font-size:13px;font-weight:600;color:var(--dark);}
+.rule-detail{font-size:12px;color:#666;line-height:1.5;margin-top:3px;}
+.footer{text-align:center;padding:24px 16px;font-size:12px;color:var(--gray-mid);border-top:1px solid var(--border);margin-top:8px;background:white;}
+.footer strong{color:var(--teal);}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-brand">Father Empowering</div>
+  <div class="header-title">Plan Nutritionnel — Legacy Protocol</div>
+  <div class="header-sub">Maxime Gaudet — Programme 100 jours</div>
+  <div class="header-meta">
+    <span class="header-badge">Sans lactose</span>
+    <span class="header-badge">Batch cooking x2 / semaine</span>
+    <span class="header-badge">190g protéines / jour</span>
+  </div>
+</div>
+
+<div class="macros-bar">
+  <div class="macros-title">Objectifs quotidiens</div>
+  <div class="macros-grid">
+    <div class="macro-card"><div class="macro-val">2 400</div><div class="macro-lbl">cal repos</div></div>
+    <div class="macro-card"><div class="macro-val">2 550</div><div class="macro-lbl">cal entraîn.</div></div>
+    <div class="macro-card accent"><div class="macro-val">190g</div><div class="macro-lbl">protéines</div></div>
+    <div class="macro-card"><div class="macro-val">3L+</div><div class="macro-lbl">eau / jour</div></div>
+  </div>
+</div>
+
+<div class="day-selector">
+  <div class="day-scroll">
+    <button class="day-btn active" onclick="showDay('dim',this)">Dim — Batch 1</button>
+    <button class="day-btn" onclick="showDay('lun',this)">Lundi</button>
+    <button class="day-btn is-train" onclick="showDay('mar',this)">Mar — Push</button>
+    <button class="day-btn" onclick="showDay('mer',this)">Mer — Batch 2</button>
+    <button class="day-btn is-train" onclick="showDay('jeu',this)">Jeu — Pull</button>
+    <button class="day-btn" onclick="showDay('ven',this)">Vendredi</button>
+    <button class="day-btn is-train" onclick="showDay('sam',this)">Sam — Jambes</button>
+    <button class="day-btn" onclick="showDay('epicerie',this)">Épicerie</button>
+    <button class="day-btn" onclick="showDay('regles',this)">Règles</button>
+  </div>
+</div>
+
+<div class="content">
+
+<!-- DIMANCHE -->
+<div id="dim" class="day-panel active">
+  <div class="info-bar blue">Journée de préparation. Batch cooking pour lundi, mardi, mercredi. Repas de la journée = libre dans les cibles.</div>
+  <div class="section-label">Batch cooking dimanche (1h–1h30 max)</div>
+  <div class="batch-card">
+    <div class="batch-header"><div class="batch-title">Préparation — lundi, mardi, mercredi</div><div class="batch-sub">Tout cuire en parallèle — four + chaudron en même temps</div></div>
+    <div class="batch-step"><div class="batch-num">1</div><div><div class="batch-step-title">Poulet en cubes — four 20–22 min</div><div class="batch-step-detail">1.5 kg poitrine de poulet. Couper en cubes, huile d'olive, sel, poivre, ail en poudre. Four 400°F. Divise en 3 contenants de 200g.</div></div></div>
+    <div class="batch-step"><div class="batch-num">2</div><div><div class="batch-step-title">Riz blanc — chaudron 20 min</div><div class="batch-step-detail">600g riz sec = environ 1.8kg cuit. Cuire pendant que le poulet est au four. Divise en 3 portions de 200g cuit.</div></div></div>
+    <div class="batch-step"><div class="batch-num">3</div><div><div class="batch-step-title">Légumes rôtis — même plaque que le poulet</div><div class="batch-step-detail">Brocoli + poivrons + zucchini. Huile d'olive, sel. Divise en 3 portions.</div></div></div>
+    <div class="batch-step"><div class="batch-num">4</div><div><div class="batch-step-title">12 oeufs durs — pour les déjeuners</div><div class="batch-step-detail">10 min dans l'eau bouillante. Réfrigère entiers avec coquille. Se gardent 7 jours.</div></div></div>
+    <div class="batch-step"><div class="batch-num">5</div><div><div class="batch-step-title">3 patates douces — four 25 min</div><div class="batch-step-detail">Couper en cubes, four 400°F. Divise en 3 portions. Optionnel pour varier avec le riz.</div></div></div>
+  </div>
+  <div class="section-label">Repas du dimanche</div>
+  <div class="meal-card">
+    <div class="meal-header"><span class="meal-time-badge">9h00</span><span class="meal-name-text">Déjeuner</span></div>
+    <div class="meal-body"><div class="meal-detail">4 oeufs entiers + 2 blancs brouillés | 1 tasse avoine + fruits | café noir</div><div class="macro-pill-row"><span class="macro-pill p">40g protéines</span><span class="macro-pill">60g glucides</span><span class="macro-pill">15g lipides</span><span class="macro-pill">530 cal</span></div></div>
+  </div>
+  <div class="meal-card">
+    <div class="meal-header"><span class="meal-time-badge">12h00</span><span class="meal-name-text">Dîner — repas libre</span></div>
+    <div class="meal-body"><div class="meal-detail">Restaurant ou maison. Vise <strong>40g+ de protéines</strong>. Évite les produits laitiers. C'est ici ou samedi que tu prends ton repas libre — pas les deux.</div><div class="macro-pill-row"><span class="macro-pill p">40g+ protéines</span></div></div>
+  </div>
+  <div class="meal-card">
+    <div class="meal-header"><span class="meal-time-badge">15h30</span><span class="meal-name-text">Collation</span></div>
+    <div class="meal-body"><div class="meal-detail">2 oeufs durs + 30g noix + 1 pomme</div><div class="macro-pill-row"><span class="macro-pill p">18g protéines</span><span class="macro-pill">20g glucides</span><span class="macro-pill">18g lipides</span><span class="macro-pill">310 cal</span></div></div>
+  </div>
+  <div class="meal-card">
+    <div class="meal-header"><span class="meal-time-badge">18h30</span><span class="meal-name-text">Souper</span></div>
+    <div class="meal-body"><div class="meal-detail">200g saumon poêlé (5 min/côté) | 1 patate douce | brocoli | huile d'olive</div><div class="macro-pill-row"><span class="macro-pill p">45g protéines</span><span class="macro-pill">35g glucides</span><span class="macro-pill">25g lipides</span><span class="macro-pill">560 cal</span></div></div>
+  </div>
+  <div class="meal-card">
+    <div class="meal-header"><span class="meal-time-badge opt">20h30 — optionnel</span><span class="meal-name-text">Collation soir</span></div>
+    <div class="meal-body"><div class="meal-detail">1 scoop protéine sans lactose + lait d'amande non sucré. Seulement si la faim est réelle.</div><div class="macro-pill-row"><span class="macro-pill p">25g protéines</span><span class="macro-pill">3g glucides</span><span class="macro-pill">2g lipides</span><span class="macro-pill">150 cal</span></div></div>
+  </div>
+</div>
+
+<!-- LUNDI -->
+<div id="lun" class="day-panel">
+  <div class="info-bar blue">Journée de travail. Pas d'entraînement. Cible : 2 400 cal. Repas du batch dimanche — tout est déjà prêt.</div>
+  <div class="day-macros">
+    <div class="macro-card"><div class="macro-val">2 400</div><div class="macro-lbl">cal</div></div>
+    <div class="macro-card accent"><div class="macro-val">190g</div><div class="macro-lbl">protéines</div></div>
+    <div class="macro-card"><div class="macro-val">210g</div><div class="macro-lbl">glucides</div></div>
+    <div class="macro-card"><div class="macro-val">75g</div><div class="macro-lbl">lipides</div></div>
+  </div>
+  <div class="meal-card">
+    <div class="meal-header"><span class="meal-time-badge">9h00</span><span class="meal-name-text">Déjeuner rapide — 5 min</span></div>
+    <div class="meal-body"><div class="meal-detail">3 oeufs durs (batch) | 1 tasse avoine instantanée + banane | café noir</div><div class="macro-pill-row"><span class="macro-pill p">35g protéines</span><span class="macro-pill">65g glucides</span><span class="macro-pill">15g lipides</span><span class="macro-pill">530 cal</span></div></div>
+  </div>
+  <div class="meal-card">
+    <div class="meal-header"><span class="meal-time-badge">12h00</span><span class="meal-name-text">Lunch chantier — contenant hermétique</span></div>
+    <div class="meal-body"><div class="meal-detail">200g poulet (batch) + 200g riz (batch) + légumes rôtis (batch) | <strong>micro-ondes sur le chantier</strong></div><div class="macro-pill-row"><span class="macro-pill p">50g protéines</span><span class="macro-pill">60g glucides</span><span class="macro-pill">10g lipides</span><span class="macro-pill">530 cal</span></div></div>
+  </div>
+  <div class="meal-card">
+    <div class="meal-header"><span class="meal-time-badge">15h30</span><span class="meal-name-text">Collation chantier</span></div>
+    <div class="meal-body"><div class="meal-detail">2 oeufs durs + 1 banane + 30g noix de cajou</div><div class="macro-pill-row"><span class="macro-pill p">20g protéines</span><span class="macro-pill">30g glucides</span><span class="macro-pill">18g lipides</span><span class="macro-pill">360 cal</span></div></div>
+  </div>
+  <div class="meal-card">
+    <div class="meal-header"><span class="meal-time-badge">18h30</span><span class="meal-name-text">Souper — 10 min</span></div>
+    <div class="meal-body"><div class="meal-detail">200g boeuf haché 85% poêlé | patate douce (batch réchauffée) | épinards + huile d'olive</div><div class="macro-pill-row"><span class="macro-pill p">45g protéines</span><span class="macro-pill">35g glucides</span><span class="macro-pill">28g lipides</span><span class="macro-pill">560 cal</span></div></div>
+  </div>
+  <div class="meal-card">
+    <div class="meal-header"><span class="meal-time-badge opt">20h30 — optionnel</span><span class="meal-name-text">Collation soir</span></div>
+    <div class="meal-body"><div class="meal-detail">1 scoop protéine sans lactose + 1 c. soupe beurre d'amande + lait d'amande. Seulement si faim réelle.</div><div class="macro-pill-row"><span class="macro-pill p">30g protéines</span><span class="macro-pill">10g glucides</span><span class="macro-pill">10g lipides</span><span class="macro-pill">250 cal</span></div></div>
+  </div>
+</div>
+
+<!-- MARDI -->
+<div id="mar" class="day-panel">
+  <div class="info-bar teal">Journée de travail + entraînement Push le soir. Cible : 2 550 cal. La collation de 15h30 est ton carburant pour l'entraînement.</div>
+  <div class="day-macros">
+    <div class="macro-card"><div class="macro-val">2 550</div><div class="macro-lbl">cal</div></div>
+    <div class="macro-card accent"><div class="macro-val">190g</div><div class="macro-lbl">protéines</div></div>
+    <div class="macro-card"><div class="macro-val">230g</div><div class="macro-lbl">glucides</div></div>
+    <div class="macro-card"><div class="macro-val">80g</div><div class="macro-lbl">lipides</div></div>
+  </div>
+  <div class="meal-card">
+    <div class="meal-header"><span class="meal-time-badge">9h00</span><span class="meal-name-text">Déjeuner rapide — 5 min</span></div>
+    <div class="meal-body"><div class="meal-detail">3 oeufs durs (batch) | 1 tasse avoine instantanée + baies | café noir</div><div class="macro-pill-row"><span class="macro-pill p">35g protéines</span><span class="macro-pill">65g glucides</span><span class="macro-pill">15g lipides</span><span class="macro-pill">530 cal</span></div></div>
+  </div>
+  <div class="meal-card">
+    <div class="meal-header"><span class="meal-time-badge">12h00</span><span class="meal-name-text">Lunch chantier</span></div>
+    <div class="meal-body"><div class="meal-detail">200g poulet (batch) + 200g riz (batch) + légumes rôtis (batch) | micro-ondes</div><div class="macro-pill-row"><span class="macro-pill p">50g protéines</span><span class="macro-pill">60g glucides</span><span class="macro-pill">10g lipides</span><span class="macro-pill">530 cal</span></div></div>
+  </div>
+  <div class="meal-card">
+    <div class="meal-header"><span class="meal-time-badge pre">15h30 — pré-workout</span><span class="meal-name-text">Collation + carburant</span></div>
+    <div class="meal-body"><div class="meal-detail">1 scoop protéine sans lactose + 1 banane | rapide, digère bien avant l'entraînement</div><div class="macro-pill-row"><span class="macro-pill p">30g protéines</span><span class="macro-pill">30g glucides</span><span class="macro-pill">3g lipides</span><span class="macro-pill">270 cal</span></div></div>
+  </div>
+  <div class="meal-card">
+    <div class="meal-header"><span class="meal-time-badge">18h30</span><span class="meal-name-text">Souper — post-workout</span></div>
+    <div class="meal-body"><div class="meal-detail">200g saumon poêlé (5 min/côté) | 150g riz (batch réchauffé) | épinards + huile d'olive</div><div class="macro-pill-row"><span class="macro-pill p">45g protéines</span><span class="macro-pill">40g glucides</span><span class="macro-pill">22g lipides</span><span class="macro-pill">540 cal</span></div></div>
+  </div>
+  <div class="meal-card">
+    <div class="meal-header"><span class="meal-time-badge opt">20h30 — optionnel</span><span class="meal-name-text">Collation soir</span></div>
+    <div class="meal-body"><div class="meal-detail">1 scoop protéine + lait d'amande + beurre d'amande. Seulement si faim réelle après l'entraînement.</div><div class="macro-pill-row"><span class="macro-pill p">30g protéines</span><span class="macro-pill">8g glucides</span><span class="macro-pill">10g lipides</span><span class="macro-pill">240 cal</span></div></div>
+  </div>
+</div>
+
+<!-- MERCREDI -->
+<div id="mer" class="day-panel">
+  <div class="info-bar blue">Journée de travail. Pas d'entraînement. Cible : 2 400 cal. Ce soir = Batch cooking 2 pour jeudi, vendredi, samedi.</div>
+  <div class="day-macros">
+    <div class="macro-card"><div class="macro-val">2 400</div><div class="macro-lbl">cal</div></div>
+    <div class="macro-card accent"><div class="macro-val">190g</div><div class="macro-lbl">protéines</div></div>
+    <div class="macro-card"><div class="macro-val">210g</div><div class="macro-lbl">glucides</div></div>
+    <div class="macro-card"><div class="macro-val">75g</div><div class="macro-lbl">lipides</div></div>
+  </div>
+  <div class="meal-card">
+    <div class="meal-header"><span class="meal-time-badge">9h00</span><span class="meal-name-text">Déjeuner rapide</span></div>
+    <div class="meal-body"><div class="meal-detail">3 oeufs durs (batch dimanche — dernier jour) | avoine + banane | café</div><div class="macro-pill-row"><span class="macro-pill p">35g protéines</span><span class="macro-pill">65g glucides</span><span class="macro-pill">15g lipides</span><span class="macro-pill">530 cal</span></div></div>
+  </div>
+  <div class="meal-card">
+    <div class="meal-header"><span class="meal-time-badge">12h00</span><span class="meal-name-text">Lunch chantier</span></div>
+    <div class="meal-body"><div class="meal-detail">200g poulet (batch dimanche) + riz + légumes | micro-ondes</div><div class="macro-pill-row"><span class="macro-pill p">50g protéines</span><span class="macro-pill">60g glucides</span><span class="macro-pill">10g lipides</span><span class="macro-pill">530 cal</span></div></div>
+  </div>
+  <div class="meal-card">
+    <div class="meal-header"><span class="meal-time-badge">15h30</span><span class="meal-name-text">Collation chantier</span></div>
+    <div class="meal-body"><div class="meal-detail">Shake protéiné en bouteille + 1 pomme</div><div class="macro-pill-row"><span class="macro-pill p">25g protéines</span><span class="macro-pill">25g glucides</span><span class="macro-pill">5g lipides</span><span class="macro-pill">260 cal</span></div></div>
+  </div>
+  <div class="meal-card">
+    <div class="meal-header"><span class="meal-time-badge">18h30</span><span class="meal-name-text">Souper rapide avant batch</span></div>
+    <div class="meal-body"><div class="meal-detail">2 boîtes thon dans l'eau + 1 avocat + légumes crus + huile d'olive | <strong>zéro cuisson</strong></div><div class="macro-pill-row"><span class="macro-pill p">50g protéines</span><span class="macro-pill">15g glucides</span><span class="macro-pill">22g lipides</span><span class="macro-pill">470 cal</span></div></div>
+  </div>
+  <div class="section-label">Batch cooking mercredi soir (1h max)</div>
+  <div class="batch-card">
+    <div class="batch-header"><div class="batch-title">Préparation — jeudi, vendredi, samedi</div><div class="batch-sub">Après le souper. Four + poêle en parallèle.</div></div>
+    <div class="batch-step"><div class="batch-num">1</div><div><div class="batch-step-title">Boeuf haché 85% — poêle 15 min</div><div class="batch-step-detail">1.2 kg boeuf haché. Poêle chaude, cuire en séparant. Sel, poivre, ail. Divise en 3 portions de 200g.</div></div></div>
+    <div class="batch-step"><div class="batch-num">2</div><div><div class="batch-step-title">Riz blanc — chaudron 20 min</div><div class="batch-step-detail">600g riz sec. Cuire pendant que le boeuf est dans la poêle. Divise en 3 portions de 200g cuit.</div></div></div>
+    <div class="batch-step"><div class="batch-num">3</div><div><div class="batch-step-title">Patates douces — micro-ondes 5–7 min chacune</div><div class="batch-step-detail">3 patates douces moyennes. Micro-ondes ou four 400°F 35 min. Divise en 3 portions.</div></div></div>
+    <div class="batch-step"><div class="batch-num">4</div><div><div class="batch-step-title">12 nouveaux oeufs durs</div><div class="batch-step-detail">Pour les déjeuners de jeudi, vendredi, samedi. 10 min dans l'eau bouillante.</div></div></div>
+    <div class="batch-step"><div class="batch-num">5</div><div><div class="batch-step-title">3 collations soir préportionnées</div><div class="batch-step-detail">3 petits contenants : 30g noix + 2 oeufs durs chacun. Sortir du frigo sans réfléchir à 20h30.</div></div></div>
+  </div>
+</div>
+
+<!-- JEUDI -->
+<div id="jeu" class="day-panel">
+  <div class="info-bar teal">Journée de travail + entraînement Pull le soir. Cible : 2 550 cal. Repas du batch mercredi.</div>
+  <div class="day-macros">
+    <div class="macro-card"><div class="macro-val">2 550</div><div class="macro-lbl">cal</div></div>
+    <div class="macro-card accent"><div class="macro-val">190g</div><div class="macro-lbl">protéines</div></div>
+    <div class="macro-card"><div class="macro-val">230g</div><div class="macro-lbl">glucides</div></div>
+    <div class="macro-card"><div class="macro-val">80g</div><div class="macro-lbl">lipides</div></div>
+  </div>
+  <div class="meal-card">
+    <div class="meal-header"><span class="meal-time-badge">9h00</span><span class="meal-name-text">Déjeuner rapide</span></div>
+    <div class="meal-body"><div class="meal-detail">3 oeufs durs (batch mercredi) | avoine + baies | café noir</div><div class="macro-pill-row"><span class="macro-pill p">35g protéines</span><span class="macro-pill">65g glucides</span><span class="macro-pill">15g lipides</span><span class="macro-pill">530 cal</span></div></div>
+  </div>
+  <div class="meal-card">
+    <div class="meal-header"><span class="meal-time-badge">12h00</span><span class="meal-name-text">Lunch chantier</span></div>
+    <div class="meal-body"><div class="meal-detail">200g boeuf haché (batch) + 200g riz (batch) + patate douce (batch) | micro-ondes</div><div class="macro-pill-row"><span class="macro-pill p">48g protéines</span><span class="macro-pill">65g glucides</span><span class="macro-pill">18g lipides</span><span class="macro-pill">620 cal</span></div></div>
+  </div>
+  <div class="meal-card">
+    <div class="meal-header"><span class="meal-time-badge pre">15h30 — pré-workout</span><span class="meal-name-text">Collation + carburant</span></div>
+    <div class="meal-body"><div class="meal-detail">1 scoop protéine + 1 banane | contenant préparé du batch mercredi</div><div class="macro-pill-row"><span class="macro-pill p">30g protéines</span><span class="macro-pill">30g glucides</span><span class="macro-pill">3g lipides</span><span class="macro-pill">270 cal</span></div></div>
+  </div>
+  <div class="meal-card">
+    <div class="meal-header"><span class="meal-time-badge">18h30</span><span class="meal-name-text">Souper — post-workout</span></div>
+    <div class="meal-body"><div class="meal-detail">200g saumon poêlé | légumes crus + avocat + huile d'olive | sans glucides lourds ce soir</div><div class="macro-pill-row"><span class="macro-pill p">45g protéines</span><span class="macro-pill">15g glucides</span><span class="macro-pill">28g lipides</span><span class="macro-pill">500 cal</span></div></div>
+  </div>
+  <div class="meal-card">
+    <div class="meal-header"><span class="meal-time-badge opt">20h30 — optionnel</span><span class="meal-name-text">Collation soir</span></div>
+    <div class="meal-body"><div class="meal-detail">Contenant préparé (batch mercredi) : 2 oeufs durs + 30g noix. Zéro préparation.</div><div class="macro-pill-row"><span class="macro-pill p">18g protéines</span><span class="macro-pill">6g glucides</span><span class="macro-pill">20g lipides</span><span class="macro-pill">280 cal</span></div></div>
+  </div>
+</div>
+
+<!-- VENDREDI -->
+<div id="ven" class="day-panel">
+  <div class="info-bar blue">Journée de travail. Pas d'entraînement. Cible : 2 400 cal. Repas du batch mercredi.</div>
+  <div class="day-macros">
+    <div class="macro-card"><div class="macro-val">2 400</div><div class="macro-lbl">cal</div></div>
+    <div class="macro-card accent"><div class="macro-val">190g</div><div class="macro-lbl">protéines</div></div>
+    <div class="macro-card"><div class="macro-val">210g</div><div class="macro-lbl">glucides</div></div>
+    <div class="macro-card"><div class="macro-val">75g</div><div class="macro-lbl">lipides</div></div>
+  </div>
+  <div class="meal-card">
+    <div class="meal-header"><span class="meal-time-badge">9h00</span><span class="meal-name-text">Déjeuner rapide</span></div>
+    <div class="meal-body"><div class="meal-detail">3 oeufs durs (batch) | avoine instantanée + banane | café</div><div class="macro-pill-row"><span class="macro-pill p">35g protéines</span><span class="macro-pill">65g glucides</span><span class="macro-pill">15g lipides</span><span class="macro-pill">530 cal</span></div></div>
+  </div>
+  <div class="meal-card">
+    <div class="meal-header"><span class="meal-time-badge">12h00</span><span class="meal-name-text">Lunch chantier</span></div>
+    <div class="meal-body"><div class="meal-detail">200g boeuf haché (batch) + riz (batch) + légumes | micro-ondes</div><div class="macro-pill-row"><span class="macro-pill p">48g protéines</span><span class="macro-pill">60g glucides</span><span class="macro-pill">18g lipides</span><span class="macro-pill">590 cal</span></div></div>
+  </div>
+  <div class="meal-card">
+    <div class="meal-header"><span class="meal-time-badge">15h30</span><span class="meal-name-text">Collation chantier</span></div>
+    <div class="meal-body"><div class="meal-detail">2 oeufs durs + 30g noix (contenant préparé du batch)</div><div class="macro-pill-row"><span class="macro-pill p">18g protéines</span><span class="macro-pill">6g glucides</span><span class="macro-pill">20g lipides</span><span class="macro-pill">280 cal</span></div></div>
+  </div>
+  <div class="meal-card">
+    <div class="meal-header"><span class="meal-time-badge">18h30</span><span class="meal-name-text">Souper vendredi soir</span></div>
+    <div class="meal-body"><div class="meal-detail">2 boîtes thon + avocat + légumes crus + huile d'olive | ou repas dans les cibles si tu sors</div><div class="macro-pill-row"><span class="macro-pill p">50g protéines</span><span class="macro-pill">15g glucides</span><span class="macro-pill">22g lipides</span><span class="macro-pill">470 cal</span></div></div>
+  </div>
+  <div class="meal-card">
+    <div class="meal-header"><span class="meal-time-badge opt">20h30 — optionnel</span><span class="meal-name-text">Collation soir</span></div>
+    <div class="meal-body"><div class="meal-detail">1 scoop protéine + lait d'amande. Seulement si faim réelle.</div><div class="macro-pill-row"><span class="macro-pill p">25g protéines</span><span class="macro-pill">5g glucides</span><span class="macro-pill">3g lipides</span><span class="macro-pill">150 cal</span></div></div>
+  </div>
+</div>
+
+<!-- SAMEDI -->
+<div id="sam" class="day-panel">
+  <div class="info-bar teal">Pas de travail + entraînement Jambes le soir. Cible : 2 550 cal. Journée plus libre — dernier repas du batch mercredi.</div>
+  <div class="day-macros">
+    <div class="macro-card"><div class="macro-val">2 550</div><div class="macro-lbl">cal</div></div>
+    <div class="macro-card accent"><div class="macro-val">190g</div><div class="macro-lbl">protéines</div></div>
+    <div class="macro-card"><div class="macro-val">230g</div><div class="macro-lbl">glucides</div></div>
+    <div class="macro-card"><div class="macro-val">80g</div><div class="macro-lbl">lipides</div></div>
+  </div>
+  <div class="meal-card">
+    <div class="meal-header"><span class="meal-time-badge">9h00</span><span class="meal-name-text">Déjeuner — plus de temps</span></div>
+    <div class="meal-body"><div class="meal-detail">4 oeufs brouillés + 2 blancs | 1 tasse avoine + baies + beurre d'amande | café</div><div class="macro-pill-row"><span class="macro-pill p">45g protéines</span><span class="macro-pill">70g glucides</span><span class="macro-pill">20g lipides</span><span class="macro-pill">640 cal</span></div></div>
+  </div>
+  <div class="meal-card">
+    <div class="meal-header"><span class="meal-time-badge">12h00</span><span class="meal-name-text">Dîner — repas libre dans les cibles</span></div>
+    <div class="meal-body"><div class="meal-detail">Resto ou maison. Vise <strong>40g+ protéines</strong>. C'est ici ou dimanche que tu prends ton repas libre — pas les deux.</div><div class="macro-pill-row"><span class="macro-pill p">40g+ protéines</span></div></div>
+  </div>
+  <div class="meal-card">
+    <div class="meal-header"><span class="meal-time-badge pre">15h30 — pré-workout</span><span class="meal-name-text">Collation + carburant</span></div>
+    <div class="meal-body"><div class="meal-detail">1 scoop protéine + 1 banane</div><div class="macro-pill-row"><span class="macro-pill p">30g protéines</span><span class="macro-pill">30g glucides</span><span class="macro-pill">3g lipides</span><span class="macro-pill">270 cal</span></div></div>
+  </div>
+  <div class="meal-card">
+    <div class="meal-header"><span class="meal-time-badge">18h30</span><span class="meal-name-text">Souper — post-workout</span></div>
+    <div class="meal-body"><div class="meal-detail">200g boeuf haché (batch mercredi) + patate douce (batch) + épinards + huile d'olive</div><div class="macro-pill-row"><span class="macro-pill p">45g protéines</span><span class="macro-pill">40g glucides</span><span class="macro-pill">22g lipides</span><span class="macro-pill">540 cal</span></div></div>
+  </div>
+  <div class="meal-card">
+    <div class="meal-header"><span class="meal-time-badge opt">20h30 — optionnel</span><span class="meal-name-text">Collation soir</span></div>
+    <div class="meal-body"><div class="meal-detail">1 scoop protéine + lait d'amande + beurre d'amande</div><div class="macro-pill-row"><span class="macro-pill p">30g protéines</span><span class="macro-pill">8g glucides</span><span class="macro-pill">10g lipides</span><span class="macro-pill">240 cal</span></div></div>
+  </div>
+  <div class="info-bar amber" style="margin-top:12px;">Après le souper — prépare ta liste d'épicerie. Le batch du dimanche recommence demain matin.</div>
+</div>
+
+<!-- ÉPICERIE -->
+<div id="epicerie" class="day-panel">
+  <div class="info-bar blue">Liste complète pour une semaine. Acheter le dimanche matin avant le batch cooking.</div>
+  <div class="grocery-card">
+    <div class="grocery-section-hdr">Protéines</div>
+    <div class="grocery-row"><span class="grocery-name">Poitrine de poulet</span><span class="grocery-qty">1.5 kg</span></div>
+    <div class="grocery-row"><span class="grocery-name">Boeuf haché 85%</span><span class="grocery-qty">1.5 kg</span></div>
+    <div class="grocery-row"><span class="grocery-name">Saumon — filets</span><span class="grocery-qty">600g (3 filets)</span></div>
+    <div class="grocery-row"><span class="grocery-name">Oeufs</span><span class="grocery-qty">2 douzaines</span></div>
+    <div class="grocery-row"><span class="grocery-name">Thon en conserve dans l'eau</span><span class="grocery-qty">6 boîtes</span></div>
+    <div class="grocery-row"><span class="grocery-name">Protéine en poudre sans lactose</span><span class="grocery-qty">~10 scoops</span></div>
+  </div>
+  <div class="grocery-card">
+    <div class="grocery-section-hdr">Glucides</div>
+    <div class="grocery-row"><span class="grocery-name">Riz blanc</span><span class="grocery-qty">1.5 kg</span></div>
+    <div class="grocery-row"><span class="grocery-name">Patates douces</span><span class="grocery-qty">6 moyennes</span></div>
+    <div class="grocery-row"><span class="grocery-name">Avoine à cuisson rapide</span><span class="grocery-qty">1 kg</span></div>
+    <div class="grocery-row"><span class="grocery-name">Bananes</span><span class="grocery-qty">8–10</span></div>
+    <div class="grocery-row"><span class="grocery-name">Baies congelées</span><span class="grocery-qty">1 sac 600g</span></div>
+    <div class="grocery-row"><span class="grocery-name">Pommes</span><span class="grocery-qty">4–5</span></div>
+  </div>
+  <div class="grocery-card">
+    <div class="grocery-section-hdr">Légumes</div>
+    <div class="grocery-row"><span class="grocery-name">Brocoli</span><span class="grocery-qty">2 têtes</span></div>
+    <div class="grocery-row"><span class="grocery-name">Poivrons mixtes</span><span class="grocery-qty">4</span></div>
+    <div class="grocery-row"><span class="grocery-name">Zucchini</span><span class="grocery-qty">2</span></div>
+    <div class="grocery-row"><span class="grocery-name">Épinards en sac</span><span class="grocery-qty">300g</span></div>
+    <div class="grocery-row"><span class="grocery-name">Légumes crus (carottes, céleri)</span><span class="grocery-qty">1 sac</span></div>
+  </div>
+  <div class="grocery-card">
+    <div class="grocery-section-hdr">Lipides et condiments</div>
+    <div class="grocery-row"><span class="grocery-name">Avocats</span><span class="grocery-qty">4–5</span></div>
+    <div class="grocery-row"><span class="grocery-name">Noix mixtes ou cajou</span><span class="grocery-qty">400g</span></div>
+    <div class="grocery-row"><span class="grocery-name">Beurre d'amande sans sucre ajouté</span><span class="grocery-qty">1 pot</span></div>
+    <div class="grocery-row"><span class="grocery-name">Huile d'olive</span><span class="grocery-qty">1 bouteille</span></div>
+    <div class="grocery-row"><span class="grocery-name">Lait d'amande non sucré</span><span class="grocery-qty">2 litres</span></div>
+    <div class="grocery-row"><span class="grocery-name">Sel, poivre, ail en poudre</span><span class="grocery-qty">si manque</span></div>
+  </div>
+</div>
+
+<!-- RÈGLES -->
+<div id="regles" class="day-panel">
+  <div class="info-bar teal">5 règles non-négociables. Simples. Pas de restriction. Structure seulement.</div>
+  <div class="rules-card">
+    <div class="rule-row"><div class="rule-num">1</div><div><div class="rule-title">Protéine en premier à chaque repas</div><div class="rule-detail">Ouvre le contenant, mange la protéine avant le reste. Le volume total se régule naturellement ensuite.</div></div></div>
+    <div class="rule-row"><div class="rule-num">2</div><div><div class="rule-title">La collation de 20h30 est planifiée — toujours</div><div class="rule-detail">Elle est dans le frigo. Préparée à l'avance. Zéro décision quand tu es fatigué. Si tu n'as pas faim, tu la sautes.</div></div></div>
+    <div class="rule-row"><div class="rule-num">3</div><div><div class="rule-title">Un repas libre par semaine — samedi ou dimanche</div><div class="rule-detail">Pas les deux. Mange ce que tu veux. Vise 40g+ de protéines quand même.</div></div></div>
+    <div class="rule-row"><div class="rule-num">4</div><div><div class="rule-title">Les 30 premiers jours — tu pèses et tu notes</div><div class="rule-detail">Après 30 jours, tu connais tes portions à l'oeil. Plus besoin de peser chaque gramme.</div></div></div>
+    <div class="rule-row"><div class="rule-num">5</div><div><div class="rule-title">Eau — minimum 3 litres par jour</div><div class="rule-detail">Construction + entraînement + recomposition. Une bouteille de 1L à remplir 3 fois dans la journée.</div></div></div>
+  </div>
+</div>
+
+</div>
+
+<div class="footer">
+  <strong>Father Empowering</strong> — Legacy Protocol<br>
+  Maxime Gaudet — Programme 100 jours — Confidentiel
+</div>
+
+<script>
+function showDay(id,btn){
+  document.querySelectorAll('.day-panel').forEach(function(el){el.classList.remove('active');});
+  document.querySelectorAll('.day-btn').forEach(function(el){el.classList.remove('active');});
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+</script>
+</body>
+</html>
